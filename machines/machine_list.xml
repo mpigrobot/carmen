@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+    <!-- The machine list -->
+    <machine name="xvr" address="192.168.1.6" user="panda" password="admin" env-loader="/opt/ros/indigo/env.sh" default="false"/>
+    <machine name="pi" address="192.168.1.8" env-loader="/opt/ros/jade/env.sh" default="true"/>
+    <machine name="carmen" address="192.168.1.66" user="mpig" password="2" env-loader="/home/mpig/mpig_catkin_ws/devel/env.sh"/>
+
+</launch>
+

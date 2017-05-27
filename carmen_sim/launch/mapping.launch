@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<launch>
+   <include file="$(find carmen_sim)/launch/includes/carmen_gazebo.xml" />
+
+   <!-- publish the posed fused with pf-->
+	<node name="fused_pose_publisher" pkg="pose_publisher" type="pose_publisher" output="screen">
+	    <param name="publish_frequency" type="double" value="12"/>
+	    <param name="map_frame" type="string" value="map" />
+	    <param name="base_frame" type="string" value="base_footprint" />
+	    <remap from="pose" to="pose_fused"/>
+	</node>
+
+   <include file="$(find carmen_sim)/launch/includes/gmapping.xml" />
+   <include file="$(find carmen_sim)/launch/includes/move_base.xml" />
+   <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="carmen_sim_teleop"  output="screen" />
+   <include file="$(find carmen_driver)/launch/teleop_joystick.launch" />
+   <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carmen_viz)/config/mapping.rviz"/>   
+</launch>

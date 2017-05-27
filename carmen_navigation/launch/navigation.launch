@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- Specify the slave machine and master machine -->
+  <arg name="master"     default="pi" />
+  <arg name="slave"      default="carmen"/>
+  <!-- The machine list -->
+  <include file="$(find machines)/machine_list.xml" />
+
+  <!-- Run the map server -->
+  <arg name="map_file" default="$(find carmen_navigation)/maps/room409.yaml"/>
+  <node name="map_server" pkg="map_server" type="map_server" args="$(arg map_file)" machine="$(arg master)"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.0 0.0 0.0 0 0 0.0 /base_link /laser 100" machine="$(arg master)"/>
+
+  <!--- Run AMCL -->
+  <include file="$(find carmen_navigation)/launch/include/amcl.xml" machine="$(arg master)" />
+
+  <!--- Run Move Base -->
+  <include file="$(find carmen_navigation)/launch/include/dis_move_base.xml"  machine="$(arg master)" />
+
+	<!--start keyboard control node -->
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="carmen_teleop"  output="screen" machine="$(arg master)"/>
+
+
+</launch>

@@ -1,0 +1,42 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- Specify the slave machine and master machine -->
+  <arg name="master"     default="pi" />
+  <!--arg name="master"     default="w" /-->
+  <arg name="slave"      default="carmen"/>
+  <!-- The machine list -->
+  <include file="$(find machines)/machine_list.xml" />
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find carmen_navigation)/maps/staircorridor-floor5-hector.yaml" machine="$(arg master)"/>
+
+  <node pkg="tf" type="static_transform_publisher" name="base_to_laser" args="0.0 0.0 0.0 0 0 0.0 base_link laser 100" machine="$(arg slave)"/>
+
+  <!--start hokuyo laser scanner node -->
+  <node name="hokuyo" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen" machine="$(arg slave)">
+      <!-- Set the port to connect to here -->
+      <param name="port" type="string" value="/dev/ttyACM0"/>
+      <!-- Starts up faster, but timestamps will be inaccurate. --> 
+      <param name="calibrate_time" type="bool" value="false"/>         
+  </node>
+
+  <!--start carmen driver node -->
+  <node name="carmen_driver" pkg="carmen_driver" type="carmen_driver_node" output="screen" machine="$(arg slave)">
+   <!-- <rosparam file="$(find carmen_driver)/config/driver.yaml" command="load" />  -->
+  </node>
+
+  <!--- Run AMCL -->
+  <include file="$(find carmen_navigation)/launch/include/amcl.xml" machine="$(arg master)" />
+
+  <!--- Run Move Base -->
+  <include file="$(find carmen_navigation)/launch/include/dis_move_base.xml" machine="$(arg master)" />
+ 
+
+  <!--remap from="/softbot/map" to="/map" -->
+
+	<!--start keyboard control node -->
+  <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="carmen_teleop"  output="screen" machine="$(arg master)"/>
+
+  <!--node pkg="rviz" type="rviz" name="rviz" args="-d $(find carmen_viz)/config/nav.rviz" machine="$(arg master)"/--> 
+</launch>

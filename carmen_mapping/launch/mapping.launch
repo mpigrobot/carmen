@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+     
+    <!-- Specify the slave machine and master machine -->
+    <arg name="master"     default="pi" />
+    <arg name="slave"      default="carmen"/>
+    <!-- The machine list -->
+    <include file="$(find machines)/machine_list.xml" />
+
+    <!--start gmapping node -->
+    <include file="$(find carmen_mapping)/launch/include/gmapping.xml"> 
+     <arg name="machine" value="$(arg master)"/>
+    </include>
+
+    <!--start keyboard control node -->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="carmen_teleop"  output="screen" machine="$(arg master)"/>
+
+    <node pkg="rosbag" type="record" name="rosbag_record_diag" args="-a" machine="$(arg master)"/>
+
+    <!--node pkg="rviz" type="rviz" name="rviz" args="-d $(find carmen_viz)/config/mapping.rviz"/-->      
+</launch>

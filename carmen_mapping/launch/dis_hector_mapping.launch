@@ -1,0 +1,78 @@
+<?xml version="1.0"?>
+<launch>
+    
+<!-- Specify the slave machine and master machine -->
+    <arg name="master"     default="pi" />
+    <arg name="slave"      default="carmen"/>
+    <!-- The machine list -->
+    <include file="$(find machines)/machine_list.xml" />
+
+    <!--start carmen driver node -->
+    <node name="carmen_driver" pkg="carmen_driver" type="carmen_driver_node" output="screen" machine="$(arg slave)">
+     <!-- <rosparam file="$(find carmen_driver)/config/driver.yaml" command="load" />  -->
+    </node>
+
+    <!-- publish tf transform from base_link to base_laser -->
+    <node name="tf_tranform" pkg="carmen_driver" type="carmen_tf_broadcaster" output="screen" machine="$(arg slave)">
+    </node>
+
+    <!--start hokuyo laser scanner node -->
+    <node name="hokuyo" pkg="hokuyo_node" type="hokuyo_node" respawn="false" output="screen" machine="$(arg slave)">
+       <!-- Set the port to connect to here -->
+      <param name="port" type="string" value="/dev/ttyACM0"/>
+      <!-- Starts up faster, but timestamps will be inaccurate. --> 
+       <param name="calibrate_time" type="bool" value="false"/> 
+        
+    </node>
+
+    <!--set parameters for hector mapping node -->    
+   <!-- <param name="pub_map_odom_transform" value="true"/>
+    <param name="map_frame" value="map"/>
+    <param name="base_frame" value="base_frame"/>
+    <param name="odom_frame" value="odom"/>-->
+
+
+      
+    <include file="$(find hector_mapping)/launch/mapping_default.launch" machine="$(arg master)">  
+        <arg name="base_frame" value="base_frame"/>  
+        <arg name="odom_frame" value="odom"/>
+    </include>  
+      
+    <include file="$(find hector_geotiff)/launch/geotiff_mapper.launch" machine="$(arg master)">  
+        <arg name="trajectory_source_frame_name" value="base_frame"/>  
+    </include>  
+     
+    <node pkg="tf" type="static_transform_publisher" name="map_frame_to_odom_frame" args="0 0 0 0 0 0 map odom 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="odom_frame_to_base_link" args="0 0 0 0 0 0 odom base_link 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_to_base_frame" args="0 0 0 0 0 0 base_link base_frame 100" machine="$(arg slave)"/>  
+    <node pkg="tf" type="static_transform_publisher"  name="base_frame_to_laser_broadcaster" args="0 0 0 0 0 0 base_frame laser 100" machine="$(arg slave)"/>  
+      
+    <node pkg="rviz" type="rviz" name="rviz"  
+    args="-d $(find hector_slam_launch)/rviz_cfg/mapping_demo.rviz" machine="$(arg master)"/>  
+      
+ 
+  
+ <!-- <node pkg="tf" type="static_transform_publisher" name="map_frame_to_odom_frame" args="0 0 0 0 0 0 map odom 100" machine="$(arg slave)"/>
+  <node pkg="tf" type="static_transform_publisher" name="odom_frame_to_base_link" args="0 0 0 0 0 0 odom base_link 100" machine="$(arg slave)"/>
+  <node pkg="tf" type="static_transform_publisher" name="base_link_to_base_frame" args="0 0 0 0 0 0 base_link base_frame 100" machine="$(arg slave)"/>
+  <node pkg="tf" type="static_transform_publisher" name="base_frame_2_laser_link" args="0 0 0 0 0 0 base_frame laser 100" machine="$(arg slave)"/>-->
+
+    <!--set static tf tranformation -->
+    <!--<node pkg="tf" type="static_transform_publisher" name="map_2_odom" args="0 0 0 0 0 0 map odom 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="odom_2_base_footprint" args="0 0 0 0 0 0 /odom /base_footprint 100" machine="$(arg slave)" />
+    <node pkg="tf" type="static_transform_publisher" name="base_footprint_2_base_link" args="0 0 0 0 0 0 /base_footprint /base_link 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_link_2_base_stabilized_link" args="0 0 0 0 0 0 /base_link /base_stabilized 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_stablized_2_base_frame" args="0 0 0 0 0 0 /base_stabilized /base_frame 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_frame_2_laser_link" args="0 0 0 0 0 0 /base_frame /laser 100" machine="$(arg slave)"/>
+    <node pkg="tf" type="static_transform_publisher" name="base_2_nav_link" args="0 0 0 0 0 0 /base_frame /nav 100" machine="$(arg slave)"/>-->
+
+    <!--start hector mapping node-->
+    <!--<include file="$(find carmen_mapping)/launch/include/hector_mapping.xml" machine="$(arg master)"/>-->
+
+    <!--start keyboard control node -->
+    <node pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" name="carmen_teleop"  output="screen" machine="$(arg master)"/>
+
+   <!-- <node pkg="rviz" type="rviz" name="rviz" args="-d $(find carmen_viz)/launch/mapping.rviz" output="screen" machine="$(arg master)"/>-->
+
+
+</launch>
